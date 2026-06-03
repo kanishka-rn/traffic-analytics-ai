@@ -1,0 +1,12 @@
+ultralytics
+opencv-python
+numpy
+pandas
+streamlit
+plotly
+deep-sort-realtime
+filterpy
+scipy
+lap
+fastapi
+uvicorn
