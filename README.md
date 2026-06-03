@@ -137,4 +137,122 @@ traffic-analytics-ai/
 ├── requirements.txt
 ├── README.md
 └── .gitignore
+```
 
+---
+
+# ⚙️ Installation
+
+## 1️⃣ Clone Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/traffic-analytics-ai.git
+```
+
+---
+
+## 2️⃣ Open Project Folder
+
+```bash
+cd traffic-analytics-ai
+```
+
+---
+
+## 3️⃣ Create Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+---
+
+## 4️⃣ Activate Environment
+
+### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+### Linux / Mac
+
+```bash
+source venv/bin/activate
+```
+
+---
+
+## 5️⃣ Install Requirements
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# ▶️ Run Project
+
+## Run Main Detection System
+
+```bash
+python main.py
+```
+
+---
+
+## Run Dashboard
+
+```bash
+streamlit run dashboard/app.py
+```
+
+---
+
+# 📊 Dashboard Features
+
+- Upload traffic video
+- Real-time vehicle tracking
+- Speed analytics
+- Traffic density monitoring
+- Live processed video output
+
+---
+
+# 🚀 Future Improvements
+
+- Lane detection
+- Helmet detection
+- Accident detection
+- Number plate recognition
+- Emergency vehicle prioritization
+- Traffic prediction using AI
+
+---
+
+# 📸 Sample Output
+
+Features shown in output:
+
+✅ Vehicle Tracking  
+✅ Vehicle Counting  
+✅ Speed Detection  
+✅ Traffic Density  
+✅ Heatmaps  
+✅ Real-Time Monitoring  
+
+---
+
+# 👨‍💻 Author
+
+Developed by **KANISHKA RN**
+
+---
+
+# ⭐ Support
+
+If you like this project:
+
+⭐ Star the repository  
+🍴 Fork the project  
+🚀 Share on LinkedIn
