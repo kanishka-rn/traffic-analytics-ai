@@ -239,7 +239,18 @@ Features shown in output:
 ✅ Speed Detection  
 ✅ Traffic Density  
 ✅ Heatmaps  
-✅ Real-Time Monitoring  
+✅ Real-Time Monitoring 
+
+---
+
+# 🤖 Streamlit link
+
+Streamlit link to access the Application
+```bash
+https://traffic-analytics-ai.streamlit.app/
+```
+
+---
 
 ---
 
@@ -247,12 +258,3 @@ Features shown in output:
 
 Developed by **KANISHKA RN**
 
----
-
-# ⭐ Support
-
-If you like this project:
-
-⭐ Star the repository  
-🍴 Fork the project  
-🚀 Share on LinkedIn
