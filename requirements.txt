@@ -1,11 +1,5 @@
-ultralytics
 opencv-python-headlines
 numpy
 pandas
 streamlit
-plotly
-deep-sort-realtime
-filterpy
-scipy
-fastapi
-uvicorn
+plotly 
