@@ -2,8 +2,8 @@ import streamlit as st
 import cv2
 import tempfile
 import numpy as np
-# from ultralytics import YOLO
-# from deep_sort_realtime.deepsort_tracker import DeepSort
+from ultralytics import YOLO
+from deep_sort_realtime.deepsort_tracker import DeepSort
 
 # =========================================
 # PAGE CONFIG
@@ -246,9 +246,9 @@ if uploaded_video is not None:
     # LOAD MODEL
     # =========================================
 
-    # model = YOLO("models/yolov8m.pt")
+    model = YOLO("models/yolov8m.pt")
 
-    # tracker = DeepSort(max_age=30)
+    tracker = DeepSort(max_age=30)
 
     # =========================================
     # OPEN VIDEO

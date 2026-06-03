@@ -73,7 +73,8 @@ while True:
     # YOLO DETECTION
     # =========================================
 
-    results = model(frame)
+    if frame is not None:
+        results = model(frame)
 
     detections = []
 

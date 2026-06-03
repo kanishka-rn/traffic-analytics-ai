@@ -1,5 +1,12 @@
-streamlit
 opencv-python-headless
 numpy
 pandas
+streamlit
 plotly
+ultralytics
+deep-sort-realtime
+filterpy
+scipy
+lap
+torch
+torchvision
