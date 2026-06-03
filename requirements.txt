@@ -7,6 +7,5 @@ plotly
 deep-sort-realtime
 filterpy
 scipy
-lap
 fastapi
 uvicorn
