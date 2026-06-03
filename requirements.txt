@@ -2,4 +2,4 @@ opencv-python-headlines
 numpy
 pandas
 streamlit
-plotly 
+plotly
