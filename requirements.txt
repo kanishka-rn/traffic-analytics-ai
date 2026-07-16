@@ -7,4 +7,5 @@ ultralytics
 torch
 torchvision
 deep-sort-realtime
-setuptools>=75.0
+setuptools<82
+ 
