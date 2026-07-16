@@ -1,10 +1,10 @@
-streamlit
-ultralytics
-opencv-python-headless==4.10.0.84
+opencv-python-headless
 numpy
 pandas
+streamlit
 plotly
+ultralytics
+torch
+torchvision
 deep-sort-realtime
-filterpy
-scipy
-lapx
+setuptools>=75.0.0
