@@ -7,7 +7,7 @@ from deep_sort_realtime.deepsort_tracker import DeepSort
 # LOAD YOLO MODEL
 # =========================================
 
-model = YOLO("models/yolov8m.pt")
+model = YOLO("yolov8m.pt")
 
 # =========================================
 # DEEPSORT TRACKER

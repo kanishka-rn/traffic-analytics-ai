@@ -246,7 +246,7 @@ if uploaded_video is not None:
     # LOAD MODEL
     # =========================================
 
-    model = YOLO("models/yolov8m.pt")
+    model = YOLO("yolov8m.pt")
 
     tracker = DeepSort(max_age=30)
 
