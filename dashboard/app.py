@@ -243,13 +243,23 @@ if uploaded_video is not None:
     st.success("✅ Video Uploaded Successfully")
 
     # =========================================
-    # LOAD MODEL
+    # LOAD MODEL (Cached)
     # =========================================
 
-    model = YOLO("yolov8m.pt")
+    @st.cache_resource
+    def load_model():
+        return YOLO("models/yolov8n.pt")
 
-    tracker = DeepSort(max_age=30)
+    @st.cache_resource
+    def load_tracker():
+        return DeepSort(max_age=30)
 
+    try:
+        model = load_model()
+        tracker = load_tracker()
+    except Exception as e:
+        st.error(f"Startup Error: {e}")
+        st.stop()
     # =========================================
     # OPEN VIDEO
     # =========================================
