@@ -45,7 +45,7 @@ st.markdown("---")
 
 c1, c2, c3 = st.columns(3)
 c1.success("🟢 YOLOv8 Detection Active")
-c2.success("🟢 ByteTrack Tracking Online")
+c2.success("🟢 DeepSORT Tracking Online")
 c3.success("🟢 AI Analytics Running")
 st.markdown("---")
 
@@ -227,6 +227,6 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align:center; color:#64748B; padding:20px;'>
 AI Smart Traffic Monitoring System 🚀<br>
-Built with YOLOv8 • ByteTrack • imageio • Streamlit
+Built with YOLOv8 • DeepSORT • OpenCV • Streamlit
 </div>
 """, unsafe_allow_html=True)
