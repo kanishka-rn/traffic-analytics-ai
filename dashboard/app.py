@@ -1,5 +1,9 @@
 import streamlit as st
-import cv2
+try:
+    import cv2
+except Exception as e:
+    st.error(f"OpenCV Error:\n{e}")
+    st.stop()
 import tempfile
 import numpy as np
 from ultralytics import YOLO
