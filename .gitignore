@@ -6,7 +6,7 @@ __pycache__/
 *.db
 *.mp4
 *.avi
-*.jpg
-*.png
 data/output
 data/input/
+models/yolov8m.pt
+Screenshot*.png

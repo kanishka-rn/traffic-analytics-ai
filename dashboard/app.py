@@ -1,6 +1,7 @@
 import streamlit as st
 import cv2
 import tempfile
+import os
 import numpy as np
 from ultralytics import YOLO
 from deep_sort_realtime.deepsort_tracker import DeepSort
@@ -16,164 +17,54 @@ st.set_page_config(
 )
 
 # =========================================
-# ADVANCED UI CSS
+# UI CSS
 # =========================================
 
 st.markdown("""
 <style>
-
-/* =========================================
-BACKGROUND
-========================================= */
-
 .stApp {
-
-    background: linear-gradient(
-        135deg,
-        #0f172a,
-        #020617
-    );
-
+    background: linear-gradient(135deg, #0f172a, #020617);
     color: white;
 }
-
-/* =========================================
-TITLE
-========================================= */
-
 h1 {
-
     font-size: 55px !important;
-
     font-weight: 800;
-
     color: white;
-
     text-align: center;
-
     letter-spacing: 1px;
 }
-
-/* =========================================
-SUBHEADINGS
-========================================= */
-
-h2, h3 {
-
-    color: #E2E8F0;
-}
-
-/* =========================================
-METRIC CARDS
-========================================= */
-
+h2, h3 { color: #E2E8F0; }
 [data-testid="metric-container"] {
-
     background: rgba(255,255,255,0.05);
-
     border: 1px solid rgba(255,255,255,0.08);
-
     border-radius: 20px;
-
     padding: 25px;
-
     backdrop-filter: blur(15px);
-
-    box-shadow:
-        0px 4px 30px rgba(0,0,0,0.3);
-
+    box-shadow: 0px 4px 30px rgba(0,0,0,0.3);
     transition: 0.3s;
 }
-
 [data-testid="metric-container"]:hover {
-
     transform: scale(1.03);
-
     border: 1px solid #00FFAA;
 }
-
-/* =========================================
-METRIC LABEL
-========================================= */
-
-[data-testid="stMetricLabel"] {
-
-    color: #94A3B8;
-
-    font-size: 18px;
-}
-
-/* =========================================
-METRIC VALUE
-========================================= */
-
-[data-testid="stMetricValue"] {
-
-    color: #00FFAA;
-
-    font-size: 42px;
-
-    font-weight: bold;
-}
-
-/* =========================================
-UPLOAD BOX
-========================================= */
-
+[data-testid="stMetricLabel"] { color: #94A3B8; font-size: 18px; }
+[data-testid="stMetricValue"] { color: #00FFAA; font-size: 42px; font-weight: bold; }
 [data-testid="stFileUploader"] {
-
     background: rgba(255,255,255,0.04);
-
     border: 2px dashed rgba(255,255,255,0.15);
-
     border-radius: 20px;
-
     padding: 30px;
 }
-
-/* =========================================
-VIDEO FRAME
-========================================= */
-
 img {
-
     border-radius: 20px;
-
     border: 2px solid rgba(255,255,255,0.1);
-
-    box-shadow:
-        0px 10px 40px rgba(0,0,0,0.4);
+    box-shadow: 0px 10px 40px rgba(0,0,0,0.4);
 }
-
-/* =========================================
-PROGRESS BAR
-========================================= */
-
 .stProgress > div > div > div > div {
-
-    background: linear-gradient(
-        90deg,
-        #00FFAA,
-        #00C2FF
-    );
+    background: linear-gradient(90deg, #00FFAA, #00C2FF);
 }
-
-/* =========================================
-SCROLLBAR
-========================================= */
-
-::-webkit-scrollbar {
-
-    width: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-
-    background: #00FFAA;
-
-    border-radius: 20px;
-}
-
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background: #00FFAA; border-radius: 20px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -185,13 +76,9 @@ st.title("🚦 AI Smart Traffic Dashboard")
 
 st.markdown("""
 <div style='text-align:center;'>
-
 <h3 style='color:#94A3B8;'>
-
 Real-Time AI Vehicle Tracking • Speed Detection • Traffic Analytics
-
 </h3>
-
 </div>
 """, unsafe_allow_html=True)
 
@@ -202,14 +89,25 @@ st.markdown("---")
 # =========================================
 
 status1, status2, status3 = st.columns(3)
-
 status1.success("🟢 YOLOv8 Detection Active")
-
 status2.success("🟢 DeepSORT Tracking Online")
-
 status3.success("🟢 AI Analytics Running")
 
 st.markdown("---")
+
+# =========================================
+# MODEL LOADER (cached across sessions)
+# =========================================
+
+@st.cache_resource
+def load_model():
+    # resolve model path relative to this file
+    base = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(base, "..", "models", "yolov8n.pt")
+    if not os.path.exists(model_path):
+        # fallback: let ultralytics auto-download yolov8n
+        return YOLO("yolov8n.pt")
+    return YOLO(model_path)
 
 # =========================================
 # VIDEO UPLOAD
@@ -226,481 +124,156 @@ uploaded_video = st.file_uploader(
 
 if uploaded_video is not None:
 
-    # =========================================
-    # SAVE TEMP FILE
-    # =========================================
-
-    temp_file = tempfile.NamedTemporaryFile(
-        delete=False
-    )
-
-    temp_file.write(
-        uploaded_video.read()
-    )
-
-    video_path = temp_file.name
+    # Save to temp file
+    tfile = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+    tfile.write(uploaded_video.read())
+    tfile.flush()
+    video_path = tfile.name
 
     st.success("✅ Video Uploaded Successfully")
 
-    # =========================================
-    # LOAD MODEL (Cached)
-    # =========================================
-
-    @st.cache_resource
-    def load_model():
-        return YOLO("models/yolov8n.pt")
-
-    @st.cache_resource
-    def load_tracker():
-        return DeepSort(max_age=30)
-
     try:
         model = load_model()
-        tracker = load_tracker()
     except Exception as e:
-        st.error(f"Startup Error: {e}")
+        st.error(f"Model load error: {e}")
         st.stop()
-    # =========================================
-    # OPEN VIDEO
-    # =========================================
+
+    # DeepSort per-session (not cached — it holds mutable state)
+    tracker = DeepSort(max_age=30)
 
     cap = cv2.VideoCapture(video_path)
 
-    # =========================================
-    # VEHICLE CLASSES
-    # =========================================
+    if not cap.isOpened():
+        st.error("❌ Could not open video. Please try a different file.")
+        st.stop()
 
     vehicle_classes = [2, 3, 5, 7]
-
-    # =========================================
-    # COUNTING
-    # =========================================
-
-    line_y = 500
-
+    line_y = 360  # adjusted for 640-height display
     counted_ids = set()
-
     total_count = 0
-
     previous_positions = {}
 
-    # =========================================
-    # LIVE VIDEO
-    # =========================================
-
     st.subheader("🎥 Live AI Detection")
-
     frame_placeholder = st.empty()
-
     progress_bar = st.progress(0)
 
-    total_frames = int(
-        cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    )
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if total_frames == 0:
+        total_frames = 1
 
-    # =========================================
-    # MAIN LOOP
-    # =========================================
+    frame_skip = 2   # process every 2nd frame to reduce load on cloud
+    frame_idx = 0
 
     while True:
-
         ret, frame = cap.read()
-
         if not ret:
             break
 
-        # =========================================
-        # RESIZE
-        # =========================================
+        frame_idx += 1
+        if frame_idx % frame_skip != 0:
+            continue
 
-        frame = cv2.resize(
-            frame,
-            (1280, 720)
-        )
+        frame = cv2.resize(frame, (854, 480))
+        display_h = 480
 
-        # =========================================
-        # YOLO DETECTION
-        # =========================================
-
-        results = model(frame)
-
+        results = model(frame, verbose=False)
         detections = []
 
         for r in results:
-
-            boxes = r.boxes
-
-            for box in boxes:
-
+            for box in r.boxes:
                 cls = int(box.cls[0])
+                if cls not in vehicle_classes:
+                    continue
+                conf = float(box.conf[0])
+                if conf < 0.4:
+                    continue
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                detections.append(([x1, y1, x2 - x1, y2 - y1], conf, cls))
 
-                if cls in vehicle_classes:
+        tracks = tracker.update_tracks(detections, frame=frame)
 
-                    conf = float(box.conf[0])
-
-                    if conf < 0.4:
-                        continue
-
-                    x1, y1, x2, y2 = map(
-                        int,
-                        box.xyxy[0]
-                    )
-
-                    detections.append(
-                        (
-                            [
-                                x1,
-                                y1,
-                                x2 - x1,
-                                y2 - y1
-                            ],
-                            conf,
-                            cls
-                        )
-                    )
-
-        # =========================================
-        # TRACKING
-        # =========================================
-
-        tracks = tracker.update_tracks(
-            detections,
-            frame=frame
-        )
-
-        # =========================================
-        # COUNT LINE
-        # =========================================
-
-        cv2.line(
-            frame,
-            (0, line_y),
-            (1280, line_y),
-            (0, 255, 255),
-            3
-        )
-
-        # =========================================
-        # PROCESS TRACKS
-        # =========================================
+        # draw counting line
+        cv2.line(frame, (0, line_y), (854, line_y), (0, 255, 255), 2)
 
         for track in tracks:
-
             if not track.is_confirmed():
                 continue
 
             track_id = track.track_id
+            x1, y1, x2, y2 = map(int, track.to_ltrb())
+            center_x = (x1 + x2) // 2
+            center_y = (y1 + y2) // 2
 
-            ltrb = track.to_ltrb()
-
-            x1, y1, x2, y2 = map(
-                int,
-                ltrb
-            )
-
-            # =========================================
-            # CENTER POINT
-            # =========================================
-
-            center_x = int(
-                (x1 + x2) / 2
-            )
-
-            center_y = int(
-                (y1 + y2) / 2
-            )
-
-            # =========================================
-            # VEHICLE COUNT
-            # =========================================
-
-            if (
-                center_y > line_y - 15 and
-                center_y < line_y + 15
-            ):
-
+            # count vehicles crossing the line
+            if line_y - 15 < center_y < line_y + 15:
                 if track_id not in counted_ids:
-
                     counted_ids.add(track_id)
-
                     total_count += 1
 
-            # =========================================
-            # SPEED DETECTION
-            # =========================================
-
+            # speed estimate
             speed = 0
-
             if track_id in previous_positions:
+                px, py = previous_positions[track_id]
+                speed = int(np.sqrt((center_x - px) ** 2 + (center_y - py) ** 2) * 0.8)
+            previous_positions[track_id] = (center_x, center_y)
 
-                prev_x, prev_y = previous_positions[
-                    track_id
-                ]
-
-                distance = np.sqrt(
-                    (center_x - prev_x) ** 2 +
-                    (center_y - prev_y) ** 2
-                )
-
-                speed = int(
-                    distance * 0.8
-                )
-
-            previous_positions[track_id] = (
-                center_x,
-                center_y
-            )
-
-            # =========================================
-            # DIRECTION
-            # =========================================
-
-            if center_y < line_y:
-
-                direction = "UP"
-
-            else:
-
-                direction = "DOWN"
-
-            # =========================================
-            # SPEED COLOR
-            # =========================================
-
-            speed_color = (0, 255, 0)
+            direction = "UP" if center_y < line_y else "DOWN"
+            speed_color = (0, 0, 255) if speed > 80 else (0, 255, 0)
 
             if speed > 80:
+                cv2.putText(frame, "OVER SPEED", (x1, y2 + 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-                speed_color = (0, 0, 255)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(frame, f"ID:{track_id}", (x1, max(y1 - 8, 10)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
+            cv2.putText(frame, f"{speed}km/h", (x1, y2 + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, speed_color, 2)
+            cv2.putText(frame, direction, (x1, y2 + 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 0), 2)
+            cv2.circle(frame, (center_x, center_y), 4, (0, 0, 255), -1)
 
-                cv2.putText(
-                    frame,
-                    "OVER SPEED",
-                    (x1, y2 + 80),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.7,
-                    (0, 0, 255),
-                    2
-                )
-
-            # =========================================
-            # BOX
-            # =========================================
-
-            cv2.rectangle(
-                frame,
-                (x1, y1),
-                (x2, y2),
-                (0, 255, 0),
-                2
-            )
-
-            # =========================================
-            # ID
-            # =========================================
-
-            cv2.putText(
-                frame,
-                f"ID: {track_id}",
-                (x1, y1 - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2
-            )
-
-            # =========================================
-            # SPEED
-            # =========================================
-
-            cv2.putText(
-                frame,
-                f"Speed: {speed} km/h",
-                (x1, y2 + 25),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                speed_color,
-                2
-            )
-
-            # =========================================
-            # DIRECTION
-            # =========================================
-
-            cv2.putText(
-                frame,
-                direction,
-                (x1, y2 + 50),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (255, 255, 0),
-                2
-            )
-
-            # =========================================
-            # CENTER DOT
-            # =========================================
-
-            cv2.circle(
-                frame,
-                (center_x, center_y),
-                5,
-                (0, 0, 255),
-                -1
-            )
-
-        # =========================================
-        # TRAFFIC STATUS
-        # =========================================
-
+        # traffic status
         if total_count < 10:
-
             traffic_status = "LOW"
-
         elif total_count < 25:
-
             traffic_status = "MEDIUM"
-
         else:
-
             traffic_status = "HIGH"
 
-        # =========================================
-        # INFO PANEL
-        # =========================================
+        # info panel overlay
+        cv2.rectangle(frame, (10, 10), (300, 110), (0, 0, 0), -1)
+        cv2.putText(frame, f"Vehicles: {total_count}", (20, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 255), 2)
+        cv2.putText(frame, f"Traffic: {traffic_status}", (20, 90),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
-        cv2.rectangle(
-            frame,
-            (20, 20),
-            (430, 170),
-            (0, 0, 0),
-            -1
-        )
-
-        cv2.putText(
-            frame,
-            f"Total Vehicles: {total_count}",
-            (40, 80),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1.2,
-            (0, 255, 255),
-            3
-        )
-
-        cv2.putText(
-            frame,
-            f"Traffic: {traffic_status}",
-            (40, 140),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0, 0, 255),
-            3
-        )
-
-        # =========================================
-        # FPS
-        # =========================================
-
-        cv2.putText(
-            frame,
-            "FPS: 25",
-            (1050, 50),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (255, 255, 0),
-            2
-        )
-
-        # =========================================
-        # PROGRESS BAR
-        # =========================================
-
-        current_frame = int(
-            cap.get(cv2.CAP_PROP_POS_FRAMES)
-        )
-
-        progress = current_frame / total_frames
-
-        progress_bar.progress(
-            min(progress, 1.0)
-        )
-
-        # =========================================
-        # DISPLAY FRAME
-        # =========================================
-
-        frame_placeholder.image(
-            frame,
-            channels="BGR",
-            use_container_width=True
-        )
-
-    # =========================================
-    # RELEASE
-    # =========================================
+        progress_bar.progress(min(frame_idx / total_frames, 1.0))
+        frame_placeholder.image(frame, channels="BGR", use_container_width=True)
 
     cap.release()
+    os.unlink(video_path)
 
     st.success("✅ Video Processing Completed")
-
-    # =========================================
-    # ANALYTICS
-    # =========================================
-
     st.markdown("---")
-
     st.subheader("📊 Traffic Analytics")
 
-    metric1, metric2 = st.columns(2)
-
-    metric1.metric(
-        "🚗 Total Vehicles",
-        total_count
-    )
-
-    metric2.metric(
-        "🚦 Traffic Density",
-        traffic_status
-    )
-
-    # =========================================
-    # LIVE STATUS
-    # =========================================
+    c1, c2 = st.columns(2)
+    c1.metric("🚗 Total Vehicles", total_count)
+    c2.metric("🚦 Traffic Density", traffic_status)
 
     st.subheader("🔥 Live Traffic Status")
-
     if traffic_status == "HIGH":
-
-        st.error(
-            "Heavy Traffic Detected"
-        )
-
+        st.error("Heavy Traffic Detected")
     elif traffic_status == "MEDIUM":
-
-        st.warning(
-            "Moderate Traffic"
-        )
-
+        st.warning("Moderate Traffic")
     else:
+        st.success("Smooth Traffic Flow")
 
-        st.success(
-            "Smooth Traffic Flow"
-        )
-
-    # =========================================
-    # FOOTER
-    # =========================================
-
-    st.markdown("---")
-
-    st.markdown("""
-    <div style='text-align:center;
-                color:#64748B;
-                padding:20px;'>
-
-    AI Smart Traffic Monitoring System 🚀
-
-    Built with YOLOv8 • DeepSORT • OpenCV • Streamlit
-
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown("---")
+st.markdown("""
+<div style='text-align:center; color:#64748B; padding:20px;'>
+AI Smart Traffic Monitoring System 🚀<br>
+Built with YOLOv8 • DeepSORT • OpenCV • Streamlit
+</div>
+""", unsafe_allow_html=True)
